@@ -1,4 +1,4 @@
-import pool from '../../../lib/db.js';
+import pool from '../../../lib/db.cjs';
 const CODE_REGEX = /^[A-Za-z0-9]{6,8}$/;
 function randomCode(len = 6){
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -30,3 +30,4 @@ export default async function handler(req,res){
   }
   res.setHeader('Allow','GET,POST'); res.status(405).json({ error:'method_not_allowed' });
 }
+
