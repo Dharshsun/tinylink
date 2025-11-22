@@ -1,0 +1,10 @@
+CREATE TABLE IF NOT EXISTS links (
+  id BIGSERIAL PRIMARY KEY,
+  code VARCHAR(8) NOT NULL UNIQUE,
+  target TEXT NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+  total_clicks BIGINT DEFAULT 0,
+  last_clicked TIMESTAMP WITH TIME ZONE,
+  deleted BOOLEAN DEFAULT FALSE
+);
+CREATE INDEX IF NOT EXISTS idx_links_code ON links(code);
