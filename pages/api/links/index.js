@@ -8,7 +8,7 @@ export default function Home() {
 
   // Fetch all links
   const fetchLinks = async () => {
-    const res = await fetch("/api/link");
+    const res = await fetch("/api/links");
     const data = await res.json();
     setLinks(data);
   };
@@ -22,7 +22,7 @@ export default function Home() {
     e.preventDefault();
     setLoading(true);
 
-    const res = await fetch("/api/link", {
+    const res = await fetch("/api/links", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ url, code }),
@@ -41,7 +41,7 @@ export default function Home() {
 
   // Delete link
   const deleteLink = async (id) => {
-    await fetch(`/api/link/${id}`, { method: "DELETE" });
+    await fetch(`/api/links/${id}`, { method: "DELETE" });
     fetchLinks();
   };
 
