@@ -43,7 +43,7 @@ export default async function handler(req, res) {
 
   // DELETE request: hard delete a link
   if (req.method === "DELETE") {
-    const { id } = req.body;
+    const { id } = req.body; // or req.query.id if you prefer query param
 
     if (!id) {
       return res.status(400).json({ error: "ID is required to delete a link" });
