@@ -6,8 +6,8 @@ export default async function handler(req, res) {
     try {
       const { rows } = await pool.query(
         `SELECT id, code, url AS originalUrl, clicks, last_clicked
-         FROM links
-         ORDER BY created_at DESC`
+FROM links
+ORDER BY created_at DESC;`
       );
       return res.status(200).json(rows);
     } catch (error) {
@@ -45,3 +45,4 @@ export default async function handler(req, res) {
   res.setHeader("Allow", "GET, POST");
   return res.status(405).json({ error: "Method not allowed" });
 }
+
