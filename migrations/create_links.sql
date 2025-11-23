@@ -7,4 +7,5 @@ CREATE TABLE IF NOT EXISTS links (
   last_clicked TIMESTAMP WITH TIME ZONE,
   deleted BOOLEAN DEFAULT FALSE
 );
+
 CREATE INDEX IF NOT EXISTS idx_links_code ON links(code);
