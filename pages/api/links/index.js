@@ -1,6 +1,7 @@
 import pool from "../../../lib/db.cjs";
 
 export default async function handler(req, res) {
+  // GET request: fetch all links
   if (req.method === "GET") {
     try {
       const { rows } = await pool.query(
@@ -15,6 +16,7 @@ export default async function handler(req, res) {
     }
   }
 
+  // POST request: create a new short link
   if (req.method === "POST") {
     const { url, code } = req.body;
 
@@ -22,6 +24,7 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "Original URL is required" });
     }
 
+    // Generate a random code if not provided
     const shortCode = code?.trim() || Math.random().toString(36).substr(2, 6);
 
     try {
@@ -38,6 +41,7 @@ export default async function handler(req, res) {
     }
   }
 
+  // If request method is not GET or POST
   res.setHeader("Allow", "GET, POST");
   return res.status(405).json({ error: "Method not allowed" });
 }
