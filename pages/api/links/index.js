@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 
 export default function Home() {
-  const [url, setUrl] = useState("");
+  const [target, setTarget] = useState("");
   const [code, setCode] = useState("");
   const [links, setLinks] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -18,7 +18,7 @@ export default function Home() {
     fetchLinks();
   }, []);
 
-  // Create new short link
+  // Create a new short link
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -26,13 +26,13 @@ export default function Home() {
     const res = await fetch("/api/links", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ url, code }),
+      body: JSON.stringify({ target, code }),
     });
 
     setLoading(false);
 
     if (res.ok) {
-      setUrl("");
+      setTarget("");
       setCode("");
       fetchLinks();
     } else {
@@ -40,9 +40,9 @@ export default function Home() {
     }
   };
 
-  // Delete link
-  const deleteLink = async (id) => {
-    await fetch(`/api/links/${id}`, { method: "DELETE" });
+  // Delete link by code (NOT id)
+  const deleteLink = async (code) => {
+    await fetch(`/api/links/${code}`, { method: "DELETE" });
     fetchLinks();
   };
 
@@ -63,8 +63,8 @@ export default function Home() {
             type="text"
             placeholder="Enter long URL"
             className="w-full border p-2 rounded"
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
+            value={target}
+            onChange={(e) => setTarget(e.target.value)}
             required
           />
 
@@ -96,16 +96,19 @@ export default function Home() {
           </thead>
           <tbody>
             {links.map((link) => {
-              const shortUrl = `${window.location.origin}/${link.code}`;
+              const origin =
+                typeof window !== "undefined" ? window.location.origin : "";
+              const shortUrl = `${origin}/${link.code}`;
+
               return (
-                <tr key={link.id}>
+                <tr key={link.code}>
                   <td className="p-2 border text-blue-600 underline cursor-pointer">
                     <a href={shortUrl} target="_blank">
                       {shortUrl}
                     </a>
                   </td>
 
-                  <td className="p-2 border text-center">{link.clicks}</td>
+                  <td className="p-2 border text-center">{link.total_clicks}</td>
 
                   <td className="p-2 border text-center">
                     {link.last_clicked
@@ -123,7 +126,7 @@ export default function Home() {
 
                     <button
                       className="px-2 py-1 bg-red-600 text-white rounded"
-                      onClick={() => deleteLink(link.id)}
+                      onClick={() => deleteLink(link.code)}
                     >
                       Delete
                     </button>
@@ -137,4 +140,3 @@ export default function Home() {
     </div>
   );
 }
-
