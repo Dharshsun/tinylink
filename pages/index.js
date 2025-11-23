@@ -1,93 +1,138 @@
 import { useState, useEffect } from "react";
+import axios from "axios";
 
 export default function Home() {
   const [links, setLinks] = useState([]);
-  const [originalUrl, setOriginalUrl] = useState("");
+  const [url, setUrl] = useState("");
+  const [customCode, setCustomCode] = useState("");
 
   // Fetch all links
   const fetchLinks = async () => {
-    const res = await fetch("/api/links");
-    const data = await res.json();
-    setLinks(data);
+    try {
+      const res = await axios.get("/api/links");
+      setLinks(res.data);
+    } catch (err) {
+      console.error("Error fetching links:", err);
+    }
   };
 
   useEffect(() => {
     fetchLinks();
   }, []);
 
-  // Create short link
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    const res = await fetch("/api/links", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ originalUrl }),
-    });
-
-    const data = await res.json();
-
-    if (data.error) {
-      alert(data.error);
+  // Create new short URL
+  const createShortUrl = async () => {
+    if (!url.trim()) {
+      alert("Please enter a URL");
       return;
     }
 
-    setOriginalUrl("");
-    fetchLinks();
+    try {
+      await axios.post("/api/links", {
+        url,
+        code: customCode
+      });
+      setUrl("");
+      setCustomCode("");
+      fetchLinks();
+    } catch (err) {
+      console.error("Error creating short URL:", err);
+      alert("Failed to create link");
+    }
   };
 
   // Delete link
-  const handleDelete = async (id) => {
-    await fetch(`/api/links/${id}`, { method: "DELETE" });
-    fetchLinks();
+  const deleteLink = async (id) => {
+    try {
+      await axios.delete(`/api/links/${id}`);
+      fetchLinks();
+    } catch (err) {
+      console.error("Error deleting:", err);
+    }
   };
 
   return (
-    <div style={{ padding: "20px", fontFamily: "Arial" }}>
+    <div style={{ padding: "40px", maxWidth: "900px", margin: "auto" }}>
       <h1>URL Shortener</h1>
 
-      <form onSubmit={handleSubmit} style={{ marginBottom: "20px" }}>
+      <div style={{ marginBottom: "20px" }}>
         <input
-          type="text"
           placeholder="Enter URL"
-          value={originalUrl}
-          onChange={(e) => setOriginalUrl(e.target.value)}
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
           style={{ padding: "8px", width: "300px" }}
         />
-        <button style={{ padding: "8px 16px", marginLeft: "10px" }}>
-          Shorten
+        <input
+          placeholder="Custom Code (optional)"
+          value={customCode}
+          onChange={(e) => setCustomCode(e.target.value)}
+          style={{ padding: "8px", marginLeft: "10px", width: "160px" }}
+        />
+        <button
+          onClick={createShortUrl}
+          style={{
+            padding: "9px 14px",
+            marginLeft: "10px",
+            cursor: "pointer"
+          }}
+        >
+          Create
         </button>
-      </form>
+      </div>
 
-      <h2>Your Links</h2>
-      {links.length === 0 && <p>No links yet.</p>}
+      <table
+        border="1"
+        cellPadding="10"
+        style={{ width: "100%", borderCollapse: "collapse" }}
+      >
+        <thead>
+          <tr>
+            <th>Short URL</th>
+            <th>Original URL</th>
+            <th>Clicks</th>
+            <th>Last Clicked</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {links.map((link) => (
+            <tr key={link.id}>
+              <td>
+                <a
+                  href={`/${link.code}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {link.code}
+                </a>
+              </td>
+              <td>{link.originalurl || link.target}</td>
+              <td>{link.clicks || link.total_clicks}</td>
+              <td>
+                {link.last_clicked
+                  ? new Date(link.last_clicked).toLocaleString()
+                  : "Never"}
+              </td>
+              <td>
+                <button
+                  onClick={() => deleteLink(link.id)}
+                  style={{ cursor: "pointer" }}
+                >
+                  Delete
+                </button>
+              </td>
+            </tr>
+          ))}
 
-      <ul>
-        {links.map((link) => (
-          <li key={link._id} style={{ marginBottom: "10px" }}>
-            <b>Short:</b>{" "}
-            <a href={`/${link.shortCode}`} target="_blank">
-              {`${typeof window !== "undefined" ? window.location.origin : ""}/${link.shortCode}`}
-            </a>
-            <br />
-            <b>Original:</b> {link.originalUrl}
-            <br />
-            <button
-              onClick={() => handleDelete(link._id)}
-              style={{
-                marginTop: "4px",
-                padding: "6px 10px",
-                background: "red",
-                color: "white",
-                border: "none",
-                cursor: "pointer",
-              }}
-            >
-              Delete
-            </button>
-          </li>
-        ))}
-      </ul>
+          {links.length === 0 && (
+            <tr>
+              <td colSpan="5" style={{ textAlign: "center" }}>
+                No links created yet.
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
     </div>
   );
 }
