@@ -1,33 +1,36 @@
-import clientPromise from "../../../lib/db.cjs";
-import { nanoid } from "nanoid";
+import pool from "../../../lib/db.cjs";
 
 export default async function handler(req, res) {
-  const client = await clientPromise;
-  const db = client.db("urlshortener");
-  const collection = db.collection("links");
+  if (req.method === "GET") {
+    const { rows } = await pool.query(
+      `SELECT id, code, target AS originalUrl, total_clicks AS clicks, last_clicked 
+       FROM links 
+       WHERE deleted = false
+       ORDER BY created_at DESC`
+    );
+    return res.status(200).json(rows);
+  }
 
   if (req.method === "POST") {
-    const { originalUrl } = req.body;
+    const { url, code } = req.body;
 
-    if (!originalUrl) {
+    if (!url) {
       return res.status(400).json({ error: "Original URL is required" });
     }
 
-    const shortCode = nanoid(6);
+    // Generate random code if not provided
+    const shortCode = code?.trim() || Math.random().toString(36).substr(2, 6);
 
-    const result = await collection.insertOne({
-      originalUrl,
-      shortCode,
-      createdAt: new Date(),
-    });
+    const result = await pool.query(
+      `INSERT INTO links (code, target)
+       VALUES ($1, $2)
+       RETURNING id, code, target`,
+      [shortCode, url]
+    );
 
-    return res.status(201).json({ id: result.insertedId, shortCode, originalUrl });
+    return res.status(201).json(result.rows[0]);
   }
 
-  if (req.method === "GET") {
-    const links = await collection.find({}).sort({ createdAt: -1 }).toArray();
-    return res.status(200).json(links);
-  }
-
-  res.status(405).json({ error: "Method not allowed" });
+  res.setHeader("Allow", "GET, POST");
+  return res.status(405).json({ error: "Method not allowed" });
 }
