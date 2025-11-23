@@ -6,6 +6,7 @@ export default function Home() {
   const [url, setUrl] = useState("");
   const [customCode, setCustomCode] = useState("");
 
+  // Fetch all links
   const fetchLinks = async () => {
     try {
       const res = await axios.get("/api/links");
@@ -19,6 +20,7 @@ export default function Home() {
     fetchLinks();
   }, []);
 
+  // Create new short URL
   const createShortUrl = async () => {
     if (!url.trim()) {
       alert("Please enter a URL");
@@ -35,6 +37,7 @@ export default function Home() {
     }
   };
 
+  // Delete a link
   const deleteLink = async (id) => {
     try {
       await axios.delete("/api/links", { data: { id } });
@@ -49,6 +52,7 @@ export default function Home() {
     <div style={{ padding: "40px", maxWidth: "900px", margin: "auto", fontFamily: "Arial, sans-serif" }}>
       <h1 style={{ textAlign: "center", color: "#2c3e50" }}>URL Shortener</h1>
 
+      {/* Input section */}
       <div style={{ display: "flex", justifyContent: "center", marginBottom: "30px", gap: "10px" }}>
         <input
           placeholder="Enter URL"
@@ -96,6 +100,7 @@ export default function Home() {
         </button>
       </div>
 
+      {/* Links table */}
       <table style={{ width: "100%", borderCollapse: "collapse", boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}>
         <thead>
           <tr style={{ backgroundColor: "#f7f7f7", color: "#2c3e50", textAlign: "left" }}>
