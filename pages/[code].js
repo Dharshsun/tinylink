@@ -1,41 +1,37 @@
-export async function getServerSideProps({ params }) {
+import pool from "../lib/db.cjs";
+
+export async function getServerSideProps({ params, res }) {
   const { code } = params;
 
-  // IMPORT INSIDE SERVER ONLY
-  const { default: pool } = await import("../lib/db.cjs");
+  try {
+    // Look up the original URL
+    const { rows } = await pool.query(
+      `SELECT url, clicks FROM links WHERE code = $1`,
+      [code]
+    );
 
-  const result = await pool.query(
-    "SELECT * FROM links WHERE code = $1 AND deleted = false",
-    [code]
-  );
+    if (rows.length === 0) {
+      return {
+        notFound: true,
+      };
+    }
 
-  if (result.rows.length === 0) {
-    return {
-      redirect: {
-        destination: "/404",
-        permanent: false,
-      },
-    };
+    const originalUrl = rows[0].url;
+
+    // Increment clicks
+    await pool.query(`UPDATE links SET clicks = clicks + 1, last_clicked = NOW() WHERE code = $1`, [code]);
+
+    // Redirect to the original URL
+    res.writeHead(302, { Location: originalUrl });
+    res.end();
+
+    return { props: {} }; // Next.js requires returning props
+  } catch (error) {
+    console.error(error);
+    return { notFound: true };
   }
-
-  const link = result.rows[0];
-
-  await pool.query(
-    `UPDATE links 
-     SET total_clicks = total_clicks + 1,
-         last_clicked = now()
-     WHERE id = $1`,
-    [link.id]
-  );
-
-  return {
-    redirect: {
-      destination: link.target,
-      permanent: false,
-    },
-  };
 }
 
-export default function Redirect() {
-  return null;
+export default function RedirectPage() {
+  return <p>Redirecting...</p>;
 }
