@@ -6,7 +6,6 @@ export default function Home() {
   const [url, setUrl] = useState("");
   const [customCode, setCustomCode] = useState("");
 
-  // Fetch all links
   const fetchLinks = async () => {
     try {
       const res = await axios.get("/api/links");
@@ -20,18 +19,13 @@ export default function Home() {
     fetchLinks();
   }, []);
 
-  // Create new short URL
   const createShortUrl = async () => {
     if (!url.trim()) {
       alert("Please enter a URL");
       return;
     }
-
     try {
-      await axios.post("/api/links", {
-        url,
-        code: customCode
-      });
+      await axios.post("/api/links", { url, code: customCode });
       setUrl("");
       setCustomCode("");
       fetchLinks();
@@ -41,96 +35,124 @@ export default function Home() {
     }
   };
 
-  // Delete link
   const deleteLink = async (id) => {
     try {
-      await axios.delete(`/api/links/${id}`);
+      await axios.delete("/api/links", { data: { id } });
       fetchLinks();
     } catch (err) {
-      console.error("Error deleting:", err);
+      console.error("Error deleting link:", err);
+      alert("Failed to delete link");
     }
   };
 
   return (
-    <div style={{ padding: "40px", maxWidth: "900px", margin: "auto" }}>
-      <h1>URL Shortener</h1>
+    <div style={{ padding: "40px", maxWidth: "900px", margin: "auto", fontFamily: "Arial, sans-serif" }}>
+      <h1 style={{ textAlign: "center", color: "#2c3e50" }}>URL Shortener</h1>
 
-      <div style={{ marginBottom: "20px" }}>
+      <div style={{ display: "flex", justifyContent: "center", marginBottom: "30px", gap: "10px" }}>
         <input
           placeholder="Enter URL"
           value={url}
           onChange={(e) => setUrl(e.target.value)}
-          style={{ padding: "8px", width: "300px" }}
+          style={{
+            padding: "10px",
+            width: "300px",
+            borderRadius: "6px",
+            border: "1px solid #ccc",
+            outline: "none",
+            fontSize: "14px"
+          }}
         />
         <input
           placeholder="Custom Code (optional)"
           value={customCode}
           onChange={(e) => setCustomCode(e.target.value)}
-          style={{ padding: "8px", marginLeft: "10px", width: "160px" }}
+          style={{
+            padding: "10px",
+            width: "180px",
+            borderRadius: "6px",
+            border: "1px solid #ccc",
+            outline: "none",
+            fontSize: "14px"
+          }}
         />
         <button
           onClick={createShortUrl}
           style={{
-            padding: "9px 14px",
-            marginLeft: "10px",
-            cursor: "pointer"
+            padding: "10px 20px",
+            backgroundColor: "#3498db",
+            color: "white",
+            border: "none",
+            borderRadius: "6px",
+            cursor: "pointer",
+            fontWeight: "bold",
+            fontSize: "14px",
+            transition: "background-color 0.2s"
           }}
+          onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "#2980b9")}
+          onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "#3498db")}
         >
           Create
         </button>
       </div>
 
-      <table
-        border="1"
-        cellPadding="10"
-        style={{ width: "100%", borderCollapse: "collapse" }}
-      >
+      <table style={{ width: "100%", borderCollapse: "collapse", boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}>
         <thead>
-          <tr>
-            <th>Short URL</th>
-            <th>Original URL</th>
-            <th>Clicks</th>
-            <th>Last Clicked</th>
-            <th>Actions</th>
+          <tr style={{ backgroundColor: "#f7f7f7", color: "#2c3e50", textAlign: "left" }}>
+            <th style={{ padding: "12px" }}>Short URL</th>
+            <th style={{ padding: "12px" }}>Original URL</th>
+            <th style={{ padding: "12px" }}>Clicks</th>
+            <th style={{ padding: "12px" }}>Last Clicked</th>
+            <th style={{ padding: "12px" }}>Actions</th>
           </tr>
         </thead>
         <tbody>
+          {links.length === 0 && (
+            <tr>
+              <td colSpan="5" style={{ textAlign: "center", padding: "20px", color: "#7f8c8d" }}>
+                No links created yet.
+              </td>
+            </tr>
+          )}
+
           {links.map((link) => (
-            <tr key={link.id}>
-              <td>
+            <tr key={link.id} style={{ borderBottom: "1px solid #ecf0f1" }}>
+              <td style={{ padding: "12px" }}>
                 <a
                   href={`/${link.code}`}
                   target="_blank"
                   rel="noopener noreferrer"
+                  style={{ color: "#2980b9", textDecoration: "none", fontWeight: "bold" }}
                 >
                   {link.code}
                 </a>
               </td>
-              <td>{link.originalurl || link.target}</td>
-              <td>{link.clicks || link.total_clicks}</td>
-              <td>
-                {link.last_clicked
-                  ? new Date(link.last_clicked).toLocaleString()
-                  : "Never"}
+              <td style={{ padding: "12px", wordBreak: "break-all" }}>{link.originalUrl}</td>
+              <td style={{ padding: "12px" }}>{link.clicks}</td>
+              <td style={{ padding: "12px" }}>
+                {link.last_clicked ? new Date(link.last_clicked).toLocaleString() : "Never"}
               </td>
-              <td>
+              <td style={{ padding: "12px" }}>
                 <button
                   onClick={() => deleteLink(link.id)}
-                  style={{ cursor: "pointer" }}
+                  style={{
+                    padding: "6px 12px",
+                    backgroundColor: "#e74c3c",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "4px",
+                    cursor: "pointer",
+                    fontSize: "13px",
+                    transition: "background-color 0.2s"
+                  }}
+                  onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "#c0392b")}
+                  onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "#e74c3c")}
                 >
                   Delete
                 </button>
               </td>
             </tr>
           ))}
-
-          {links.length === 0 && (
-            <tr>
-              <td colSpan="5" style={{ textAlign: "center" }}>
-                No links created yet.
-              </td>
-            </tr>
-          )}
         </tbody>
       </table>
     </div>
