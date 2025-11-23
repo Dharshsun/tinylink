@@ -5,7 +5,7 @@ export default async function handler(req, res) {
   if (req.method === "GET") {
     try {
       const { rows } = await pool.query(
-        `SELECT id, code, url AS originalUrl, clicks, last_clicked
+        `SELECT id, code, url AS "originalUrl", clicks, last_clicked
          FROM links
          ORDER BY created_at DESC`
       );
@@ -31,7 +31,7 @@ export default async function handler(req, res) {
       const result = await pool.query(
         `INSERT INTO links (code, url)
          VALUES ($1, $2)
-         RETURNING id, code, url`,
+         RETURNING id, code, url AS "originalUrl"`,
         [shortCode, url]
       );
       return res.status(201).json(result.rows[0]);
@@ -43,7 +43,7 @@ export default async function handler(req, res) {
 
   // DELETE request: hard delete a link
   if (req.method === "DELETE") {
-    const { id } = req.body; // or req.query.id if you prefer query param
+    const { id } = req.body; // Expecting JSON { id: ... }
 
     if (!id) {
       return res.status(400).json({ error: "ID is required to delete a link" });
