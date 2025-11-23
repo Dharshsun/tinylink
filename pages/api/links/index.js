@@ -1,96 +1,33 @@
-'use client';
-import { useState, useEffect } from "react";
+import clientPromise from "../../../lib/db.cjs";
+import { nanoid } from "nanoid";
 
-export default function Home() {
-  const [links, setLinks] = useState([]);
-  const [originalUrl, setOriginalUrl] = useState("");
+export default async function handler(req, res) {
+  const client = await clientPromise;
+  const db = client.db("urlshortener");
+  const collection = db.collection("links");
 
-  // Fetch all links
-  const fetchLinks = async () => {
-    const res = await fetch("/api/links");
-    const data = await res.json();
-    setLinks(data);
-  };
+  if (req.method === "POST") {
+    const { originalUrl } = req.body;
 
-  useEffect(() => {
-    fetchLinks();
-  }, []);
-
-  // Create short link
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    const res = await fetch("/api/links", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ originalUrl }),
-    });
-
-    const data = await res.json();
-
-    if (data.error) {
-      alert(data.error);
-      return;
+    if (!originalUrl) {
+      return res.status(400).json({ error: "Original URL is required" });
     }
 
-    setOriginalUrl("");
-    fetchLinks();
-  };
+    const shortCode = nanoid(6);
 
-  // Delete link
-  const handleDelete = async (id) => {
-    await fetch(`/api/links/${id}`, { method: "DELETE" });
-    fetchLinks();
-  };
+    const result = await collection.insertOne({
+      originalUrl,
+      shortCode,
+      createdAt: new Date(),
+    });
 
-  return (
-    <div style={{ padding: "20px", fontFamily: "Arial" }}>
-      <h1>URL Shortener</h1>
+    return res.status(201).json({ id: result.insertedId, shortCode, originalUrl });
+  }
 
-      <form onSubmit={handleSubmit} style={{ marginBottom: "20px" }}>
-        <input
-          type="text"
-          placeholder="Enter URL"
-          value={originalUrl}
-          onChange={(e) => setOriginalUrl(e.target.value)}
-          style={{ padding: "8px", width: "300px" }}
-        />
-        <button style={{ padding: "8px 16px", marginLeft: "10px" }}>
-          Shorten
-        </button>
-      </form>
+  if (req.method === "GET") {
+    const links = await collection.find({}).sort({ createdAt: -1 }).toArray();
+    return res.status(200).json(links);
+  }
 
-      <h2>Your Links</h2>
-      {links.length === 0 && <p>No links yet.</p>}
-
-      <ul>
-        {links.map((link) => (
-          <li key={link._id} style={{ marginBottom: "10px" }}>
-            <b>Short:</b>{" "}
-            <a href={`/${link.shortCode}`} target="_blank">
-              {`${typeof window !== "undefined" ? window.location.origin : ""}/${link.shortCode}`}
-            </a>
-            <br />
-            <b>Original:</b> {link.originalUrl}
-            <br />
-            <button
-              onClick={() => handleDelete(link._id)}
-              style={{
-                marginTop: "4px",
-                padding: "6px 10px",
-                background: "red",
-                color: "white",
-                border: "none",
-                cursor: "pointer",
-              }}
-            >
-              Delete
-            </button>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
+  res.status(405).json({ error: "Method not allowed" });
 }
-
-
